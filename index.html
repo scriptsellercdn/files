@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload and Copy Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #uploadResult {
+            margin-top: 20px;
+        }
+
+        #fileURL {
+            width: 80%;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload a File</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file" required>
+            <button type="submit">Upload File</button>
+        </form>
+        <div id="uploadResult" class="hidden">
+            <p>File URL:</p>
+            <input type="text" id="fileURL" readonly>
+            <button id="copyButton">Copy Link</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('upload.php', { // Replace with your server-side upload script
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const fileURL = `https://storage-s3.scriptseller.shop/uploads/${data.fileName}`;
+                    document.getElementById('fileURL').value = fileURL;
+                    document.getElementById('uploadResult').classList.remove('hidden');
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                alert('An error occurred during the upload.');
+            });
+        });
+
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const fileURL = document.getElementById('fileURL');
+            fileURL.select();
+            fileURL.setSelectionRange(0, 99999); // For mobile devices
+
+            navigator.clipboard.writeText(fileURL.value)
+                .then(() => {
+                    alert('Link copied to clipboard!');
+                })
+                .catch(err => {
+                    console.error('Error copying link to clipboard:', err);
+                    alert('Failed to copy link.');
+                });
+        });
+    </script>
+</body>
+</html>
